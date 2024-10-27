@@ -1,0 +1,2 @@
+# CADdie
+MDL Discord Bot
