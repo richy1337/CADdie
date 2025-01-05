@@ -6,10 +6,13 @@ data_path = r"data_file"
 chroma_path = r"chroma_db"
 
 chroma_client = chromadb.PersistentClient(path=chroma_path)
+
 collection = chroma_client.get_or_create_collection(name="nike_pdf")
-user_query = input("Hello! What would you like help with?\n\n")
+
 loader = PyPDFDirectoryLoader(data_path)
+
 docs = loader.load()
+
 print(f"Loaded {len(docs)} documents from PDF directory.")
 
 text_splitter = RecursiveCharacterTextSplitter(
