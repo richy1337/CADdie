@@ -1,24 +1,37 @@
-from openai import OpenAI
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai import ChatOpenAI
-from dotenv import load_dotenv
-from pinecone import Pinecone, ServerlessSpec
-
-load_dotenv()
+import chromadb
 
 data_path = r"data_file"
-pc = Pinecone(api_key="pcsk_6bVnaX_vymrJ3iq9vDywksrgmXsiD3pr4aDSRYxaLe7cKGoCUn7HWQhywrD2zDiWz2sVY")
+chroma_path = r"chroma_db"
 
 chroma_client = chromadb.PersistentClient(path=chroma_path)
 collection = chroma_client.get_or_create_collection(name="nike_pdf")
-loader = PyPDFDirectoryLoader(file_path)
+user_query = input("Hello! What would you like help with?\n\n")
+loader = PyPDFDirectoryLoader(data_path)
 docs = loader.load()
+print(f"Loaded {len(docs)} documents from PDF directory.")
 
 text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000, chunk_overlap=200, add_start_index=True
+    chunk_size=200, chunk_overlap=50, length_function=len,
 )
-all_splits = text_splitter.split_documents(docs)
+chunks = text_splitter.split_documents(docs)
 
-llm = ChatOpenAI(model="gpt-4o-mini", streaming=True)
+documents = []
+metadata = []
+ids = []
+i = 0
+
+for chunk in chunks:
+    documents.append(chunk.page_content)
+    ids.append("ID"+str(i))
+    metadata.append(chunk.metadata)
+    i += 1
+
+collection.upsert(
+    documents=documents,
+    metadatas=metadata,
+    ids=ids
+)
+
 
